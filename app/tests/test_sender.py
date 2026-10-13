@@ -45,3 +45,24 @@ def test_send_metrics_http_error(mock_post):
             "http://localhost:8000/metrics",
             {"agent": "test"},
         )
+
+
+@patch("app.sender.requests.post")
+def test_send_metrics_non_json_response(mock_post):
+    response = Mock()
+    response.status_code = 200
+    response.json.side_effect = ValueError("Réponse JSON invalide")
+    response.text = "Réponse brute du serveur"
+    response.raise_for_status.return_value = None
+    mock_post.return_value = response
+
+    result = send_metrics(
+        "http://localhost:8000/metrics",
+        {"agent": "test"},
+    )
+
+    assert result == {
+        "status_code": 200,
+        "response": "Réponse brute du serveur",
+    }
+
