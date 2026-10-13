@@ -1,22 +1,50 @@
-FROM python:3.12-slim-bookworm
+
+# Étape 1 : télécharger les dépendances dans un environnement de construction
+FROM python:3.12-slim-bookworm AS builder
+
+WORKDIR /build
+
+COPY requirements-prod.lock .
+
+RUN python -m pip download \
+    --no-cache-dir \
+    --require-hashes \
+    --only-binary=:all: \
+    --dest=/wheels \
+    -r requirements-prod.lock
+
+
+# Étape 2 : image finale de l'agent
+FROM python:3.12-slim-bookworm AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    METRICS_ENDPOINT=http://api:8000/metrics \
+    COLLECTION_INTERVAL=5 \
+    REQUEST_TIMEOUT=5
 
 WORKDIR /app
 
-# Installer procps, qui fournit la commande uptime
+# Installer uniquement les outils d'exécution nécessaires
+# procps fournit la commande uptime
 RUN apt-get update \
     && apt-get install -y --no-install-recommends procps \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --no-create-home --uid 10001 appuser
 
-# Installer les dépendances de production
-COPY requirements-prod.txt .
-RUN pip install --no-cache-dir -r requirements-prod.txt
+# Installer les dépendances depuis les paquets pré-téléchargés
+COPY --from=builder /wheels /wheels
+COPY requirements-prod.lock .
 
-# Utilisateur non privilégié
-RUN useradd --system --no-create-home --uid 10001 appuser
+RUN python -m pip install \
+    --no-cache-dir \
+    --no-index \
+    --find-links=/wheels \
+    --require-hashes \
+    --only-binary=:all: \
+    -r requirements-prod.lock \
+    && rm -rf /wheels requirements-prod.lock
 
 # Copier le code de l'agent
 COPY app/ ./app/

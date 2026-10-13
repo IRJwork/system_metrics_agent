@@ -1,4 +1,20 @@
-FROM python:3.12-slim-bookworm
+# Étape 1 : préparation des dépendances
+FROM python:3.12-slim-bookworm AS builder
+
+WORKDIR /build
+
+COPY requirements-prod.lock .
+
+RUN python -m pip download \
+    --no-cache-dir \
+    --require-hashes \
+    --only-binary=:all: \
+    --dest=/wheels \
+    -r requirements-prod.lock
+
+
+# Étape 2 : image finale de l'API
+FROM python:3.12-slim-bookworm AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -6,14 +22,19 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Installer uniquement les dépendances de production
-COPY requirements-prod.txt .
-RUN pip install --no-cache-dir -r requirements-prod.txt
+COPY --from=builder /wheels /wheels
+COPY requirements-prod.lock .
 
-# Créer un utilisateur non privilégié
-RUN useradd --system --no-create-home --uid 10001 appuser
+RUN python -m pip install \
+    --no-cache-dir \
+    --no-index \
+    --find-links=/wheels \
+    --require-hashes \
+    --only-binary=:all: \
+    -r requirements-prod.lock \
+    && rm -rf /wheels requirements-prod.lock \
+    && useradd --system --no-create-home --uid 10001 appuser
 
-# Copier le code de l'API
 COPY app/ ./app/
 
 USER appuser
