@@ -1,4 +1,3 @@
-
 """Tests des endpoints de l'API FastAPI."""
 
 import pytest

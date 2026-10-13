@@ -1,4 +1,3 @@
-
 """Tests unitaires de l'agent de collecte."""
 
 from unittest.mock import patch
@@ -24,6 +23,7 @@ def settings():
 # -------------------------------------------------------------------
 # Tests de run_once()
 # -------------------------------------------------------------------
+
 
 @patch("app.agent.send_metrics")
 @patch("app.agent.format_metrics")
@@ -87,6 +87,7 @@ def test_run_once_propagates_collection_error(
 # -------------------------------------------------------------------
 # Tests de run_forever()
 # -------------------------------------------------------------------
+
 
 @patch("app.agent.time.sleep")
 @patch("app.agent.run_once")

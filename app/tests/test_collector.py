@@ -1,4 +1,3 @@
-
 """Tests du module de collecte des métriques système."""
 
 from unittest.mock import Mock, patch
@@ -58,9 +57,7 @@ def test_get_load_average_on_windows(mock_run, mock_system):
 )
 @patch("app.collector.platform.system", return_value="Linux")
 @patch("app.collector.subprocess.run")
-def test_get_load_average_command_errors(
-    mock_run, mock_system, exception
-):
+def test_get_load_average_command_errors(mock_run, mock_system, exception):
     mock_run.side_effect = exception
 
     with pytest.raises(MetricsCollectionError, match="uptime"):
@@ -77,9 +74,7 @@ def test_get_load_average_command_errors(
 )
 @patch("app.collector.platform.system", return_value="Linux")
 @patch("app.collector.subprocess.run")
-def test_get_load_average_invalid_output(
-    mock_run, mock_system, output
-):
+def test_get_load_average_invalid_output(mock_run, mock_system, output):
     mock_run.return_value = Mock(stdout=output)
 
     with pytest.raises(

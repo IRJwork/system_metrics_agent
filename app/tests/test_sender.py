@@ -65,4 +65,3 @@ def test_send_metrics_non_json_response(mock_post):
         "status_code": 200,
         "response": "Réponse brute du serveur",
     }
-
