@@ -1,1 +1,28 @@
+# Secrets et configuration locale
 .env
+.env.*
+!.env.example
+
+# Environnement Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Tests et caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Git et outils locaux
+.git/
+.vscode/
+.idea/
+
+# Fichiers temporaires
+*.log
+.DS_Store
+Thumbs.db
