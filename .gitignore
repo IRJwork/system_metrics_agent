@@ -5,3 +5,12 @@ __pycache__/
 .venv/
 venv/
 .git/
+
+# Configuration locale SonarQube
+.env.sonar
+.coverage
+coverage.xml
+htmlcov/
+*.py[cod]
+.env.*
+!.env.example

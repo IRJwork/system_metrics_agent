@@ -1,4 +1,5 @@
 """Module de collecte des métriques système."""
+
 from __future__ import annotations
 
 import platform
@@ -14,11 +15,11 @@ class MetricsCollectionError(RuntimeError):
 
 
 def get_load_average() -> dict[str, float | None]:
-    """Retourne la charge système via subprocess.
+    """Retourne les moyennes de charge via la commande uptime.
 
-    La commande `uptime` est exécutée afin de démontrer une collecte
-    complémentaire basée sur un processus système externe. La valeur est
-    disponible principalement sur les systèmes Unix.
+    Les moyennes de charge ne sont pas disponibles nativement sur
+    Windows. Sur les systèmes Unix, elles sont extraites de la sortie
+    de la commande uptime.
     """
     if platform.system().lower().startswith("win"):
         return {
@@ -47,15 +48,23 @@ def get_load_average() -> dict[str, float | None]:
     output = result.stdout.strip()
 
     try:
-        marker = "load average:"
-        if marker not in output:
-            marker = "load averages:"
-        values = output.split(marker, maxsplit=1)[1].strip()
-        values = values.replace(",", " ")
-        parts = [float(value.strip()) for value in values.split()[:3]]
-        if len(parts) != 3:
-            raise ValueError("Nombre de valeurs insuffisant.")
-    except (IndexError, ValueError) as exc:
+        import re
+
+        match = re.search(
+            r"load averages?:\s*"
+            r"([0-9]+(?:\.[0-9]+)?)\s*[, ]\s*"
+            r"([0-9]+(?:\.[0-9]+)?)\s*[, ]\s*"
+            r"([0-9]+(?:\.[0-9]+)?)",
+            output,
+            re.IGNORECASE,
+        )
+
+        if not match:
+            raise ValueError("Moyennes de charge introuvables.")
+
+        parts = [float(value) for value in match.groups()]
+
+    except (ValueError, IndexError) as exc:
         raise MetricsCollectionError(
             f"Impossible d'analyser la sortie uptime : {output}"
         ) from exc
